@@ -5,6 +5,9 @@
 model_list:
   - model_name: gateway-test
     litellm_params:
+      # MOCK ONLY: LiteLLM returns mock_response directly without calling any provider.
+      # The OpenAI model name below is just a routing placeholder LiteLLM requires.
+      # No OpenAI API key is used and no token leaves this host.
       model: openai/gpt-3.5-turbo
       mock_response: "Gateway is responding. This is a mock response for Phase 1 testing."
 
