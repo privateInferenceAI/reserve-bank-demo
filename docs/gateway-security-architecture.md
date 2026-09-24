@@ -39,9 +39,29 @@ Verification at the end of Phase 0:
 
 Open item for Phase 2: AWS Bedrock serverless model access is auto-enabled on first invocation, but Anthropic may ask for first-time use-case details.
 
+## Phase 1 — Docker + LiteLLM gateway skeleton
+
+*Status: complete (2026-09-24).*
+
+What I configured:
+
+- Docker Engine and Docker Compose plugin installed from the official repository.
+- Postgres 16 (Alpine) container for LiteLLM state: virtual keys, budgets, spend logs, request metadata.
+- LiteLLM container bound to 127.0.0.1:4000 only, with a mock model alias for end-to-end testing.
+- Secrets generated with openssl rand and stored in /opt/reserve-bank-demo/.env at mode 600.
+- Master key / virtual key hierarchy established. The master key administers keys; the virtual key is what a consumer holds.
+
+Verification at the end of Phase 1:
+
+- docker compose ps shows gw-postgres and gw-litellm both healthy.
+- curl http://127.0.0.1:4000/health/liveliness returns "I'm alive!".
+- POST /key/generate with the master key minted a virtual key scoped to model alias gateway-test.
+- POST /v1/chat/completions with the virtual key returned the mock response.
+
+Why Postgres matters: LiteLLM persists keys, budgets, and spend in the database. Without it, every container restart would lose your key state and you couldn't audit usage.
+
 ## Upcoming phases
 
-- Phase 1: Docker + LiteLLM skeleton + Postgres + first virtual key.
 - Phase 2: Bedrock Claude provider + least-privilege IAM.
 - Phase 3: Virtual-key tiers, budgets, spend logs, rotation.
 - Phase 4: Gateway guardrails callback (topic denial + PII redaction).
