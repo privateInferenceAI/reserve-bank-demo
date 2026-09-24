@@ -17,14 +17,27 @@ I'm standing up a single LiteLLM AI gateway that controls access to Claude throu
 
 ## Phase 0 — Baseline host security
 
-*Status: in progress.*
+*Status: complete (2026-09-24).*
 
-- Fresh t3.large, Ubuntu 24.04, 40–60 GB disk.
-- SSH key only; password auth disabled.
-- UFW default deny incoming, allow SSH only.
-- fail2ban for brute-force suppression.
-- System packages updated and upgraded.
-- `.env` file created with mode 600; Secrets Manager later.
+Build target: t3.large, Ubuntu 24.04.5 LTS, 50 GB gp3 root volume, IMDSv2 enforced.
+
+What I configured:
+
+- SSH key-only auth, root login disabled, password auth disabled. The drop-in config lives in /etc/ssh/sshd_config.d/99-hardening.conf.
+- UFW default deny incoming, allow outgoing, with only port 22/tcp open.
+- fail2ban jail for sshd: 5 failed attempts in 10 minutes triggers a 1-hour ban.
+- System packages updated and upgraded; ufw, fail2ban, curl, jq installed.
+- Project cloned to /opt/reserve-bank-demo with a .env skeleton at mode 600.
+
+Verification at the end of Phase 0:
+
+- Listening ports: only 22 (sshd). Local DNS stub on 127.0.0.53:53 is loopback-only and expected.
+- SSH hardening: permitrootlogin no, passwordauthentication no, pubkeyauthentication yes.
+- UFW active, rule set reduced to 22/tcp.
+- fail2ban sshd jail active, zero bans at baseline.
+- .env permissions confirmed 600.
+
+Open item for Phase 2: AWS Bedrock serverless model access is auto-enabled on first invocation, but Anthropic may ask for first-time use-case details.
 
 ## Upcoming phases
 

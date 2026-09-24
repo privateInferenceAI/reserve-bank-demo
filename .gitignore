@@ -1,0 +1,4 @@
+# Secrets and keys
+.env
+*.pem
+*.key
