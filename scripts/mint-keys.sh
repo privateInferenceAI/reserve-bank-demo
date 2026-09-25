@@ -18,6 +18,6 @@ mint() {
     | jq -r '.key'
 }
 
-echo "research   (mock + claude,  \$0.50): $(mint research '["gateway-test","company-claude"]' 0.50 'research tier: mock and Claude')"
-echo "restricted (mock only,      \$0.01): $(mint restricted '["gateway-test"]' 0.01 'restricted tier: mock only, tiny budget')"
-echo "app        (claude only,    \$1.00): $(mint app '["company-claude"]' 1.00 'app tier: production Claude access')"
+echo "research   (mock + claude,  \$0.50): $(mint research-tier '["gateway-test","company-claude"]' 0.50 'research tier: mock and Claude')"
+echo "restricted (mock only,      \$0.01): $(mint restricted-tier '["gateway-test"]' 0.01 'restricted tier: mock only, tiny budget')"
+echo "app        (claude only,    \$1.00): $(mint app-tier '["company-claude"]' 1.00 'app tier: production Claude access')"
