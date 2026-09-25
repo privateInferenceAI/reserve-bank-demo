@@ -100,9 +100,30 @@ What I configured:
 
 Caveat for a bank: LiteLLM's native SpendLogs have inconsistencies (alias vs. underlying model name, occasional truncation). They are useful for cost tracking but not sufficient as the sole compliance audit trail. The gateway callback in Phase 4 will add a structured, authoritative audit record.
 
+## Phase 4 — Gateway guardrails callback
+
+*Status: complete (2026-09-25).*
+
+What I configured:
+
+- `guardrails/callback.py` — LiteLLM `CustomGuardrail` with:
+  - Pre-call topic denial for salary/SSN/prompt-injection keywords.
+  - Post-call PII redaction for US SSN patterns.
+  - Greppable `[bank-guardrail] ALLOW/DENIED` audit lines with key alias.
+- `guardrails/policy.txt` — human-readable policy mirror.
+- `docker-compose.yml` updated to mount `guardrails/` into the LiteLLM container.
+- `litellm/config.yaml` updated with `callbacks: guardrails.callback.proxy_handler_instance`.
+
+Verification at the end of Phase 4:
+
+- Denied prompt ("salary of the CEO") returns HTTP 400 with "Request denied by gateway policy."
+- Allowed prompt ("What is FedRAMP?") reaches Claude and returns a response.
+- Logs contain `[bank-guardrail] DENIED key_alias=app-tier keyword='salary of'` and `[bank-guardrail] ALLOW key_alias=app-tier model=company-claude`.
+
+Why this lives at the gateway: a UI-level filter can be bypassed by any client that calls the gateway API directly. A LiteLLM callback runs inside the gateway and cannot be bypassed.
+
 ## Upcoming phases
 
-- Phase 4: Gateway guardrails callback (topic denial + PII redaction).
 - Phase 5: Lock-down binding, ALB + TLS, security groups, Secrets Manager.
 - Phase 6: Terraform IaC skeleton.
 - Phase 7: Finalize narrative and rehearse.
