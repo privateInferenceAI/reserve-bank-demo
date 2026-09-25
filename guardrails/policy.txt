@@ -1,0 +1,22 @@
+# Gateway Guardrail Policy
+
+Enforced by guardrails/callback.py (LiteLLM CustomGuardrail).
+This is the control point: every consumer passes through here.
+
+## Pre-call topic denial
+
+The following prompts are denied before they reach any model:
+
+- Salary or compensation probes ("salary of", "how much does").
+- Social Security number requests ("ssn", "social security number").
+- Prompt-injection attempts ("ignore previous instructions", "ignore all previous", "you are now", "system:").
+
+Denied requests return HTTP 400 with "Request denied by gateway policy."
+
+## Post-call PII redaction
+
+Responses are scanned for US Social Security numbers (XXX-XX-XXXX) and rewritten to [REDACTED] before returning to the caller.
+
+## Why this lives at the gateway
+
+A UI-level filter can be bypassed by any client that talks directly to the gateway API. This callback cannot be bypassed because it runs inside LiteLLM on every request.
