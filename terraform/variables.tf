@@ -15,6 +15,7 @@ variable "ec2_key_name" {
 }
 
 variable "acm_certificate_arn" {
-  description = "ARN of an ACM certificate for the ALB HTTPS listener"
+  description = "ARN of an ACM certificate for the ALB HTTPS listener. Leave empty to skip HTTPS."
   type        = string
+  default     = ""
 }
