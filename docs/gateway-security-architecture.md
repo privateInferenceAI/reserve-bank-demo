@@ -83,9 +83,25 @@ Why Bedrock for a bank: AWS Bedrock is the government-standard path for Claude b
 
 Open item for Phase 5/6: replace the static AWS access keys with an IAM instance role attached to the EC2 instance.
 
+## Phase 3 — API management: virtual keys, ACLs, budgets, spend logs, rotation
+
+*Status: complete (2026-09-24).*
+
+What I configured:
+
+- `scripts/mint-keys.sh` to provision three tiered virtual keys:
+  - `research-tier` — models `gateway-test` and `company-claude`, max budget \$0.50.
+  - `restricted-tier` — model `gateway-test` only, max budget \$0.01.
+  - `app-tier` — model `company-claude` only, max budget \$1.00.
+- Verified ACL enforcement: `restricted-tier` is blocked from `company-claude`; `app-tier` is blocked from `gateway-test`.
+- Verified budget enforcement: a key with max budget \$0.001 was denied after its first Claude call exceeded the cap.
+- Verified key rotation: deleted a virtual key and issued `budget-test-v2`; the old key returns `token_not_found_in_db`.
+- Inspected `LiteLLM_SpendLogs` in Postgres: every request has a timestamp, model, spend, and hashed virtual-key token.
+
+Caveat for a bank: LiteLLM's native SpendLogs have inconsistencies (alias vs. underlying model name, occasional truncation). They are useful for cost tracking but not sufficient as the sole compliance audit trail. The gateway callback in Phase 4 will add a structured, authoritative audit record.
+
 ## Upcoming phases
 
-- Phase 3: Virtual-key tiers, budgets, spend logs, rotation.
 - Phase 4: Gateway guardrails callback (topic denial + PII redaction).
 - Phase 5: Lock-down binding, ALB + TLS, security groups, Secrets Manager.
 - Phase 6: Terraform IaC skeleton.
