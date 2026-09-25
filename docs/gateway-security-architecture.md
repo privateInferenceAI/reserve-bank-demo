@@ -60,9 +60,31 @@ Verification at the end of Phase 1:
 
 Why Postgres matters: LiteLLM persists keys, budgets, and spend in the database. Without it, every container restart would lose your key state and you couldn't audit usage.
 
+## Phase 2 — Bedrock Claude provider + least-privilege IAM
+
+*Status: complete (2026-09-24).*
+
+What I configured:
+
+- IAM user `reserve-bank-litellm` with no console access.
+- IAM policy `reserve-bank-bedrock-haiku` allowing only `bedrock:InvokeModel` on:
+  - the inference profile `arn:aws:bedrock:us-east-1:426063972668:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0`
+  - the underlying foundation model ARNs in us-east-1, us-east-2, and us-west-2 (cross-region inference routing).
+- AWS access keys for that user stored in `.env` at mode 600.
+- LiteLLM config updated with `company-claude` alias pointing to `bedrock/us.anthropic.claude-haiku-4-5-20251001-v1:0`.
+- Bedrock model access enabled for the account (admin-level one-time agreement + use-case form).
+
+Verification at the end of Phase 2:
+
+- POST /v1/chat/completions with the `phase2-claude` virtual key returns a real Claude response through Bedrock.
+- IAM policy has no Marketplace or extra permissions after the one-time subscription was completed.
+
+Why Bedrock for a bank: AWS Bedrock is the government-standard path for Claude because it is FedRAMP-authorized and data stays within the AWS account boundary. Direct Anthropic API is a one-line config swap, but it is not the regulated path.
+
+Open item for Phase 5/6: replace the static AWS access keys with an IAM instance role attached to the EC2 instance.
+
 ## Upcoming phases
 
-- Phase 2: Bedrock Claude provider + least-privilege IAM.
 - Phase 3: Virtual-key tiers, budgets, spend logs, rotation.
 - Phase 4: Gateway guardrails callback (topic denial + PII redaction).
 - Phase 5: Lock-down binding, ALB + TLS, security groups, Secrets Manager.
