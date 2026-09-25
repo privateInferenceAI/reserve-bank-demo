@@ -122,10 +122,49 @@ Verification at the end of Phase 4:
 
 Why this lives at the gateway: a UI-level filter can be bypassed by any client that calls the gateway API directly. A LiteLLM callback runs inside the gateway and cannot be bypassed.
 
+## Phase 5 — Production lock-down shape
+
+*Status: design captured in Terraform; not applied to a live environment.*
+
+What the design does:
+
+- LiteLLM currently binds to `127.0.0.1:4000`. No external traffic can hit it directly.
+- An Application Load Balancer terminates TLS and forwards to port 4000.
+- Security groups enforce least privilege:
+  - ALB allows only HTTPS (443) from the internet.
+  - EC2 allows SSH (22) only from the admin IP.
+  - EC2 allows port 4000 only from the ALB security group.
+- AWS IAM instance role (`reserve-bank-litellm-role`) gives the EC2 instance only `bedrock:InvokeModel`. No long-lived AWS access keys live on the instance.
+- Secrets (DB password, LiteLLM master key) move to AWS Secrets Manager and are injected at boot, replacing the static `.env` file.
+
+Why this matters: TLS terminates at the edge, the gateway has no direct internet exposure, and runtime credentials are short-lived/role-based rather than static keys.
+
+## Phase 6 — Terraform IaC skeleton
+
+*Status: complete; `terraform plan` succeeds with 14 resources to add.*
+
+What I built:
+
+- `terraform/main.tf`: VPC, public subnet, internet gateway, route table, ALB + target group + target attachment, EC2 instance, IAM role/policy/instance profile, security groups.
+- `terraform/variables.tf`: region, admin CIDR, EC2 key name, optional ACM certificate ARN.
+- `terraform/outputs.tf`: gateway public IP, ALB DNS name, instance role ARN.
+- `terraform/user_data.sh`: bootstrap script to install Docker and start the stack on first boot.
+
+Key learning from the first plan:
+
+- Terraform needs admin/CI credentials to manage EC2/VPC/IAM/ELB resources.
+- The EC2 instance at runtime uses a separate least-privilege role that can only invoke Bedrock.
+- AWS publishes the latest Ubuntu AMI ID via SSM Parameter Store, so we look it up there instead of guessing AMI names.
+
+Verification:
+
+- `terraform init` downloaded the AWS provider.
+- `terraform plan` with admin credentials returned `Plan: 14 to add, 0 to change, 0 to destroy.` with no errors.
+
+I did not run `terraform apply` because creating the ALB and EC2 costs money; the plan output is the artifact for the interview.
+
 ## Upcoming phases
 
-- Phase 5: Lock-down binding, ALB + TLS, security groups, Secrets Manager.
-- Phase 6: Terraform IaC skeleton.
 - Phase 7: Finalize narrative and rehearse.
 
 ## What I recommend for a bank environment
