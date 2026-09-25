@@ -66,3 +66,7 @@ class BankGuardrail(CustomGuardrail):
         except Exception as e:  # fail open on redaction errors, but log them
             print(f"[bank-guardrail] redaction error (passing through): {e}")
         return response
+
+
+# LiteLLM expects an instance, not the class, in the callbacks config.
+proxy_handler_instance = BankGuardrail()

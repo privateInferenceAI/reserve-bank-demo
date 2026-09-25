@@ -25,7 +25,7 @@ litellm_settings:
   drop_params: true
   set_verbose: false
   # GATEWAY-LEVEL GUARDRAILS — enforced for every consumer (see guardrails/callback.py)
-  callbacks: guardrails.callback.BankGuardrail
+  callbacks: guardrails.callback.proxy_handler_instance
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
