@@ -39,17 +39,18 @@ class BankGuardrail(CustomGuardrail):
     async def async_pre_call_hook(self, user_api_key_dict, cache, data, call_type):
         """Runs before the model call. Raise to deny; return data to allow."""
         text = self._last_user_text(data)
+        key_alias = getattr(user_api_key_dict, "key_alias", None)
         for kw in DENIED_KEYWORDS:
             if kw in text:
                 # AUDIT LINE: denial events must be greppable.
                 print(
                     f"[bank-guardrail] DENIED "
-                    f"key_alias={user_api_key_dict.get('key_alias')} "
+                    f"key_alias={key_alias} "
                     f"keyword={kw!r}"
                 )
                 raise HTTPException(status_code=400, detail=REFUSAL_MESSAGE)
         print(
-            f"[bank-guardrail] ALLOW key_alias={user_api_key_dict.get('key_alias')} "
+            f"[bank-guardrail] ALLOW key_alias={key_alias} "
             f"model={data.get('model')}"
         )
         return data
